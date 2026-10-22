@@ -23,3 +23,8 @@ jobs:
       - run: python 08-offline-fqi/train.py --episodes 10 --no-log
       - run: python 09-grpo-reasoning/train.py --steps 2 --no-log
       - run: python 10-multi-agent/train.py --steps 10 --no-log
+      - run: python 11-alphazero-selfplay/train.py --games 1 --simulations 3 --no-log
+      - run: python 12-muzero-latent/train.py --steps 2 --no-log
+      - run: python 13-dreamer-imagination/train.py --steps 2 --no-log
+      - run: python 14-decision-transformer/train.py --steps 2 --no-log
+      - run: python 15-rlhf-from-scratch/train.py --steps 2 --no-log
