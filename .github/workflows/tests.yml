@@ -29,3 +29,4 @@ jobs:
       - run: python 14-decision-transformer/train.py --steps 2 --no-log
       - run: python 15-rlhf-from-scratch/train.py --steps 2 --no-log
       - run: python 15-rlhf-from-scratch/token_rlhf.py --steps 1 --no-log
+      - run: python experiments/compare_td_dyna.py --env-steps 32 --seeds 0 1 --planning-steps 2
