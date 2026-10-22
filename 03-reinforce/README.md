@@ -64,3 +64,7 @@ advantage 和旧轨迹 reward 当作常数；该实现只用同一 episode 中�
 - [Simple Statistical Gradient-Following Algorithms (Williams, 1992)](https://link.springer.com/article/10.1007/BF00992696)
 - [本章 papers 目录与获取说明](papers/README.md)。
 - **注意**：代码为原创教学重写，非论文作者的官方实现；论文版权与使用条款请遵循原站说明。
+
+### 关于 Baseline 的一个重要数学细节
+
+经典策略梯度要求 baseline 不依赖于当前选择的动作。本章用**之前 episode 的指数滑动回报平均**作为当前 episode 的固定 baseline；不要直接减去当前完整轨迹的平均回报并断言这必定无偏，因为该平均回报自身取决于轨迹内的动作。完整 Actor-Critic 可改用只依赖状态的 (V(s)) 作为 baseline。

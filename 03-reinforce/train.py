@@ -20,12 +20,11 @@ class Policy(nn.Module):
         return Categorical(logits=self.net(obs))
 
 
-def reinforce_loss(log_probs, rewards, gamma=.99):
+def reinforce_loss(log_probs, rewards, gamma=.99, baseline=0.0):
     returns = torch.as_tensor(discounted_returns(rewards, gamma), dtype=torch.float32)
-    # Baseline 不影响策略梯度的期望，却通常能降低方差。
-    advantages = returns - returns.mean()
-    if returns.numel() > 1:
-        advantages /= returns.std(unbiased=False).clamp_min(1e-6)
+    # 使用之前 episode 统计得到的 baseline：对当前轨迹采样的动作是独立的。
+    # 不减去当前轨迹自己的 returns.mean()，因为这会引入与当前动作相关的偏差。
+    advantages = returns - float(baseline)
     return -(torch.stack(log_probs) * advantages).sum(), returns
 
 
@@ -36,6 +35,7 @@ def train(episodes=250, seed=42, log_enabled=True):
     policy = Policy()
     optimizer = torch.optim.Adam(policy.parameters(), lr=1e-3)
     log = RunLogger("03-reinforce", log_enabled)
+    baseline = 0.0  # 从之前 episode 的平均 returns 构建滑动 baseline。
     for ep in range(episodes):
         obs, _ = env.reset(seed=seed + ep)
         probs, rewards = [], []
@@ -48,7 +48,8 @@ def train(episodes=250, seed=42, log_enabled=True):
             obs = nxt
             if terminated or truncated:
                 break
-        loss, _ = reinforce_loss(probs, rewards)
+        loss, returns = reinforce_loss(probs, rewards, baseline=baseline)
+        baseline = 0.9 * baseline + 0.1 * returns.mean().item()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
