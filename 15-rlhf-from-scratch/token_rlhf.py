@@ -171,7 +171,11 @@ def token_ppo_step(policy, reference, rm, optimizer, batch=32,
         nn.utils.clip_grad_norm_(policy.parameters(), 1.)
         optimizer.step()
     with torch.no_grad():
-        exact = (actions == answer).all(-1).float().mean()
+        # 评估更新后的 CURRENT policy，且使用新生成问题与新 rollout。
+        # 不要将旧行为策略采样的 batch 准确率错标为更新后的模型指标。
+        fresh_prompt, fresh_answer = questions(batch)
+        fresh_actions = policy.generate(fresh_prompt)
+        exact = (fresh_actions == fresh_answer).all(-1).float().mean()
     return float(loss), float(score.mean()), float(exact), float(ratio.mean())
 
 
@@ -194,7 +198,7 @@ def train(steps=200, seed=42, log_enabled=True):
         log.scalar("token_ppo/loss", loss, step)
         log.scalar("token_ppo/reward_model", rm_score, step)
         log.scalar("token_ppo/ratio", ratio, step)
-        log.scalar("eval/exact_response", accuracy, step)
+        log.scalar("eval/fresh_current_policy_exact_response", accuracy, step)
     log.close()
     print("token-SFT loss:", round(sft_loss, 4),
           "pairwise-RM loss:", round(rm_loss, 4))
