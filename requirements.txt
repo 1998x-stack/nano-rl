@@ -1,0 +1,6 @@
+numpy>=1.26
+torch>=2.1
+gymnasium>=1.0,<2
+loguru>=0.7
+tensorboard>=2.14
+pytest>=8

@@ -1,0 +1,11 @@
+__pycache__/
+.pytest_cache/
+.venv/
+*.pyc
+runs/
+*.pt
+*.pth
+*.bin
+*.npz
+*.pdf
+.DS_Store

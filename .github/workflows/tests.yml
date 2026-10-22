@@ -1,0 +1,25 @@
+name: Python tests
+on:
+  push:
+  pull_request:
+jobs:
+  cpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest tests -q
+      - run: python 01-mdp-planning/train.py --iterations 5 --no-log
+      - run: python 02-td-control/train.py --episodes 5 --no-log
+      - run: python 03-reinforce/train.py --episodes 2 --no-log
+      - run: python 04-dqn/train.py --steps 30 --no-log
+      - run: python 05-ppo/train.py --steps 64 --no-log
+      - run: python 06-sac/train.py --steps 32 --no-log
+      - run: python 07-dyna-q/train.py --episodes 5 --no-log
+      - run: python 08-offline-fqi/train.py --episodes 10 --no-log
+      - run: python 09-grpo-reasoning/train.py --steps 2 --no-log
+      - run: python 10-multi-agent/train.py --steps 10 --no-log
