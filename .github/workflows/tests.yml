@@ -28,3 +28,4 @@ jobs:
       - run: python 13-dreamer-imagination/train.py --steps 2 --no-log
       - run: python 14-decision-transformer/train.py --steps 2 --no-log
       - run: python 15-rlhf-from-scratch/train.py --steps 2 --no-log
+      - run: python 15-rlhf-from-scratch/token_rlhf.py --steps 1 --no-log

@@ -60,3 +60,23 @@ python -m pytest tests -q
 **数据来源 / 许可**：脚本内生成一位整数及正确答案，偏好标签明确标为 synthetic。 见 [环境数据清单](../datasets/README.md)。若扩展到真实 benchmark，请核实源许可证与评价预算。
 
 **论文 PDF**：在仓库根目录执行 `python scripts/download_papers.py --chapter 15-rlhf-from-scratch` 可选择性下载 arXiv 原文到本地 papers/，第三方论文不会提交 Git 仓库。
+
+## 7. Advanced lab: genuine autoregressive token-level GPT RLHF
+
+The default `train.py` exposes the clearest one-token RLHF mathematics. Once you understand its SFT → preference model → clipped PPO updates, continue with **[token_rlhf.py](token_rlhf.py)**, which expands the same approach to an actual causal Transformer:
+
+```bash
+python 15-rlhf-from-scratch/token_rlhf.py --steps 200
+tensorboard --logdir runs
+```
+
+Unlike the introductory categorical model, this new experiment has:
+- **A causal Transformer** over prompt tokens `[BOS,a,PLUS,b,EQUAL]`, followed by **two sequentially sampled answer digits** and `EOS` for the reward model.
+- **Response-token SFT** at autoregressive positions 4 and 5; the model cannot read its future answer.
+- **Pairwise sequence reward model** (GRU + Bradley–Terry), learned from synthetic answer preferences.
+- **Token-level KL shaping** against a frozen copy of the SFT policy, old log-probs frozen during PPO epochs, and a value head for per-token returns.
+- A restricted arithmetic grammar (tens 0–1, ones 0–9). This avoids untrained special tokens and is **not** a general-purpose LLM.
+
+Code reading sequence: `MiniGPT.forward` → `MiniGPT.evaluate` → `SequenceReward` → `supervised_finetuning` → `learn_preference_model` → `token_ppo_step`. Follow the action-token positions and explicitly verify no same-step token leakage.
+
+The toy data are **not** human preferences, and two generated digits are **not** the full variable-length masked sequence PPO used with modern large LLMs. This experiment is a technically meaningful bridge toward that implementation.
