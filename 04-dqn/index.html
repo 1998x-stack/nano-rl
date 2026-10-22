@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>04 · DQN · Deep Q-Network | nano-rl</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#141d30;--border:#334154;--text:#eaf1fc;--muted:#afc0d8;--accent:#62d6ba}
+*{box-sizing:border-box}body{margin:0;font:16px/1.65 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(ellipse at 80% 0,#173448 0,transparent 42%),var(--bg);color:var(--text)}
+a{color:#92eacb}header,main,footer{max-width:1100px;margin:auto;padding:24px}header{display:flex;justify-content:space-between;align-items:center;gap:16px}header a{font-size:14px;text-decoration:none}
+h1{font-size:clamp(28px,5vw,48px);line-height:1.18;margin:12px 0 16px;letter-spacing:-.04em}h2{font-size:21px;margin:0 0 12px}p{color:var(--muted);margin:0 0 16px}
+.eyebrow{font:600 12px/1.4 ui-monospace,monospace;letter-spacing:.14em;color:var(--accent)}.hero{padding:44px 0}
+.layout{display:grid;grid-template-columns:1.2fr 1fr;gap:20px}.card{background:linear-gradient(135deg,#192338,#111a2a);padding:24px;border:1px solid var(--border);border-radius:16px}
+.formula{font:600 16px/1.8 ui-monospace,SFMono-Regular,monospace;background:#0b1526;border:1px solid var(--border);padding:18px;word-break:break-word;border-radius:10px;color:#f2dfab;margin:18px 0}
+label{display:flex;justify-content:space-between;gap:8px;margin-top:16px;font-weight:600}input[type=range]{width:100%;accent-color:var(--accent);margin:15px 0 8px}
+svg{display:block;width:100%;height:auto;background:#0a1526;border-radius:12px}.steps{list-style:none;counter-reset:step;padding:0}.steps li{counter-increment:step;display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);align-items:flex-start}.steps li:before{content:counter(step,decimal-leading-zero);font:700 13px monospace;color:var(--accent)}
+small{color:var(--muted)}button{border:1px solid var(--accent);border-radius:8px;background:transparent;color:var(--accent);cursor:pointer;padding:9px 14px}
+pre{overflow:auto;background:#081426;padding:18px;border-radius:12px;color:#ccece7;font-size:13px}footer{color:var(--muted);font-size:12px;padding-top:40px;padding-bottom:50px}
+@media(max-width:760px){.layout{grid-template-columns:1fr}header{padding-bottom:0}.hero{padding:24px 0}main{padding:18px}}
+</style></head>
+<body><header><a href="../index.html">← nano-rl / curriculum</a><a href="README.md">阅读 Markdown 教材 ↗</a></header>
+<main><section class="hero"><div class="eyebrow">04 / 2013—2015 / INTERACTIVE LAB</div>
+<h1>DQN · Deep Q-Network</h1><p>用深度网络代替 Q 表；经验回放降低连续数据的相关性，慢更新 target 网络降低不稳定性。</p></section>
+<div class="layout"><section class="card"><div class="eyebrow">01 · THE OBJECTIVE</div><h2>核心数学</h2>
+<div class="formula">y = r + γ (1−terminal) max_a Q_target(s',a)</div><p>Replay + Target Q</p><div class="eyebrow">INTERACTIVE PARAMETER</div>
+<label for="slider"><span>target lag</span><output id="readout"></output></label>
+<input id="slider" type="range" min="1" max="50" step="1" value="10" aria-label="target lag">
+<svg id="chart" viewBox="0 0 540 248" role="img" aria-label="核心超参影响示意图，可使用上方滑块调整">
+<line x1="40" x2="525" y1="206" y2="206" stroke="#64748b"/><line x1="40" x2="40" y1="18" y2="206" stroke="#64748b"/>
+<g id="grid"></g><polyline id="plot" fill="none" stroke="#62d6ba" stroke-width="3" stroke-linejoin="round"/><text id="caption" x="43" y="235" fill="#bcd0df" font-size="13"></text></svg>
+<small>模型解释示意：动态曲线用于理解参数影响，不是完整训练结果或论文实验数据。</small>
+</section><section class="card"><div class="eyebrow">02 · TRAIN LOOP</div><h2>一次更新发生了什么？</h2>
+<ol class="steps" id="steps"></ol><div class="eyebrow" style="margin-top:26px">03 · CODE ANCHOR</div>
+<pre id="anchor"></pre><p><a href="train.py">打开本章全部核心 Python 代码 ↗</a></p>
+</section></div>
+<div class="layout" style="margin-top:20px"><section class="card"><div class="eyebrow">EXPERIMENT</div><h2>动手验证假设</h2>
+<p id="ablation"></p><a href="../datasets/README.md">对应的环境和数据集来源 ↗</a></section>
+<section class="card"><div class="eyebrow">PAPER / CORRECTNESS</div><h2>阅读原论文</h2><p id="pitfall"></p><a id="paper" target="_blank" rel="noopener noreferrer">核心论文 ↗</a></section></div>
+</main><footer>nano-rl · tutorial implementation · no external JS dependencies · synthetic learning curves</footer>
+<script>
+const d={"id":"04-dqn","n":"04","title":"DQN · Deep Q-Network","period":"2013—2015","method":"Replay + Target Q","formula":"y = r + γ (1−terminal) max_a Q_target(s',a)","insight":"用深度网络代替 Q 表；经验回放降低连续数据的相关性，慢更新 target 网络降低不稳定性。","algorithm":["ε-greedy 采样 CartPole transition","存入 ReplayBuffer 并随机抽取 minibatch","利用冻结的 target network 计算 y","最小化 Huber(Q_online(s,a),y)，定期同步 target"],"param":"target lag","unit":"lag","min":1,"max":50,"step":1,"val":10,"pitfall":"target 只用于计算监督目标，不允许梯度回传；ReplayBuffer 中存 terminated 而非合并 done。","ablation":"关闭 replay 或频繁同步 target 时，比较损失曲线；只支持离散动作。","code":"QNet / dqn_target / train","paper":"Human-level Control through Deep Reinforcement Learning (Mnih et al., 2015)","url":"https://doi.org/10.1038/nature14236","env":"Gymnasium CartPole-v1"};
+const slider=document.getElementById("slider"), readout=document.getElementById("readout");
+document.getElementById("steps").innerHTML=d.algorithm.map(x=>"<li>"+x+"</li>").join("");
+document.getElementById("anchor").textContent="train.py → "+d.code+"\n\n# Open the file and follow the shape of each update.";
+document.getElementById("ablation").textContent=d.ablation;
+document.getElementById("pitfall").textContent=d.pitfall;
+const paper=document.getElementById("paper");paper.href=d.url;paper.textContent=d.paper+" ↗";
+function score(x,p){
+ const g=(z)=>Math.exp(-z*z);
+ switch(d.n){
+ case "01": return (1-Math.pow(p,x*7))/(1-p+0.08);
+ case "02": return 0.1 + 1-Math.pow(1-p,12*x);
+ case "03": return Math.pow(p,Math.floor(5*x))*(.25+.7*x);
+ case "04": return 1-Math.exp(-x*180/(p+1));
+ case "05": {let r=.45+x*1.35,a=1;return Math.min(r*a,Math.max(1-p,Math.min(1+p,r))*a);}
+ case "06": return 1-Math.pow(x-.7,2)*1.9+p*(-Math.log(.08+Math.abs(x-.5)))*.24;
+ case "07": return 1-Math.exp(-x*(p+1)/4);
+ case "08": return (1-p)*(.35+.45*x)+p*(.20+.72*x);
+ case "09": return 1-Math.pow(1-.10,p*(.2+.8*x));
+ case "10": return (1-p)*(.25+.72*x)+p*.5;
+ default:return x;
+ }
+}
+function redraw(){
+ const p=Number(slider.value);readout.textContent=String(p);
+ const ys=Array.from({length:100},(_,i)=>score(i/99,p));
+ const lo=Math.min(...ys),hi=Math.max(...ys),spread=Math.max(.01,hi-lo);
+ const points=ys.map((v,i)=>(40+485*i/99).toFixed(1)+","+(203-175*(v-lo)/spread).toFixed(1)).join(" ");
+ document.getElementById("plot").setAttribute("points",points);
+ document.getElementById("caption").textContent="x: normalized progress / ratio     y: relative objective ("+d.unit+"="+p+")";
+ const grid=document.getElementById("grid");
+ grid.innerHTML=[.25,.5,.75].map(y=>'<line x1="40" x2="525" y1="'+(203-y*175)+'" y2="'+(203-y*175)+'" stroke="#344355" stroke-dasharray="3 7"/>').join("");
+}
+slider.addEventListener("input",redraw);redraw();
+</script></body></html>
