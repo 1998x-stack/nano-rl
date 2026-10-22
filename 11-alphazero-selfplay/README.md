@@ -60,3 +60,9 @@ python -m pytest tests -q
 **数据来源 / 许可**：无需下载，内置 TicTacToe。合法动作由棋盘空格决定。 见 [环境数据清单](../datasets/README.md)。若扩展到真实 benchmark，请核实源许可证与评价预算。
 
 **论文 PDF**：在仓库根目录执行 `python scripts/download_papers.py --chapter 11-alphazero-selfplay` 可选择性下载 arXiv 原文到本地 papers/，第三方论文不会提交 Git 仓库。
+
+## v2.0 review correction
+
+在 v2.0 中，`masked_policy_log_probs(logits, states)` 会从策略训练的 softmax 分母中排除已落子位置，同时拒绝非法 MCTS 目标的非零概率，确保搜索与训练的动作空间一致。
+
+详见 [v2.0 审查报告](../REVIEW_V2.0.md) 与 [专项回归测试](../tests/test_v20_review.py)。

@@ -60,3 +60,9 @@ python -m pytest tests -q
 **数据来源 / 许可**：CorridorEnv 生成可复现小轨迹；不下载 Atari/Minecraft。 见 [环境数据清单](../datasets/README.md)。若扩展到真实 benchmark，请核实源许可证与评价预算。
 
 **论文 PDF**：在仓库根目录执行 `python scripts/download_papers.py --chapter 13-dreamer-imagination` 可选择性下载 arXiv 原文到本地 papers/，第三方论文不会提交 Git 仓库。
+
+## v2.0 review correction
+
+在 v2.0 中，`collect_sequences()` 将真实步骤和终止后填充区分开；`reconstruction_loss()` 的每项监督均使用 `valid` mask，世界模型的状态不在 padding 上继续推进。想象 Actor-Critic 从非终止的初态出发。
+
+详见 [v2.0 审查报告](../REVIEW_V2.0.md) 与 [专项回归测试](../tests/test_v20_review.py)。

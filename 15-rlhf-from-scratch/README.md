@@ -80,3 +80,9 @@ Unlike the introductory categorical model, this new experiment has:
 Code reading sequence: `MiniGPT.forward` → `MiniGPT.evaluate` → `SequenceReward` → `supervised_finetuning` → `learn_preference_model` → `token_ppo_step`. Follow the action-token positions and explicitly verify no same-step token leakage.
 
 The toy data are **not** human preferences, and two generated digits are **not** the full variable-length masked sequence PPO used with modern large LLMs. This experiment is a technically meaningful bridge toward that implementation.
+
+## v2.0 review correction
+
+在 v2.0 中，`token_rlhf.py` 的准确率使用 PPO 更新后策略在新生成题目上重新采样计算，指标名为 `eval/fresh_current_policy_exact_response`，不再把旧策略 rollout 当作当前策略的评估。
+
+详见 [v2.0 审查报告](../REVIEW_V2.0.md) 与 [专项回归测试](../tests/test_v20_review.py)。
