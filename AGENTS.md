@@ -30,3 +30,10 @@ Keep the implementation small enough to understand from top to bottom. **Never s
 - Distinguish a mini demonstration from full original paper: document exact simplifications next to claims.
 - Run `pytest` and 15 CPU smoke scripts in CI before declaring success; verify computed HTML scripts with Node syntax checker.
 - Update both main `index.html` chapters and root `README.md` when creating a new chapter.
+
+## v2.0 audit invariants
+- AlphaZero: mask invalid actions in both search and training loss, including logsoftmax normalization.
+- MuZero/Dreamer: padded post-terminal rows carry `valid=0`; no supervised gradient on padding and no imagined rollout from already terminal states.
+- Matched research experiments: count real `env_steps` and imagined `planning_backups` separately, align epsilon/lr/gamma and report incomplete episode exclusions.
+- Token RLHF: evaluation after PPO must sample from the updated policy on fresh prompts, not old rollout actions.
+- Review fixes and remaining research debt in `REVIEW_V2.0.md` before merging.

@@ -21,3 +21,12 @@
 
 ## Policy on claims
 V2's small experiments isolate mathematical principles and are not official AlphaZero/MuZero/DreamerV3/InstructGPT performance reproductions. Training success requires evidence from multi-seed evaluation, not a smoke test.
+
+## v2.0 reviewed changes
+- [x] AlphaZero policy loss masks all illegal moves and tests gradient exclusion.
+- [x] MuZero/Dreamer use valid masks for terminal padding; Dreamer starts imagined rollouts from nonterminal observations.
+- [x] Equal-real-step Q-Learning vs Dyna comparison with separate planning overhead and incomplete episode accounting.
+- [x] Fresh-current-policy accuracy for token-level RLHF.
+- [x] Formal review with prioritized remaining work: [REVIEW_V2.0.md](REVIEW_V2.0.md).
+- [ ] Independent held-out evaluation sets and model error calibration.
+- [ ] Large-budget multi-seed performance curves with fair wall-time reporting.

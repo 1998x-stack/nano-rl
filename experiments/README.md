@@ -3,11 +3,11 @@
 ## Reproducible comparison
 
 ```bash
-python experiments/compare_td_dyna.py --episodes 100 --seeds 0 1 2 3 4 --planning-steps 10 --output runs/td_dyna.json
-python experiments/compare_td_dyna.py --episodes 100 --seeds 0 1 2 3 4 --planning-steps 0 --output runs/dyna_no_planning.json
+python experiments/compare_td_dyna.py --env-steps 2000 --seeds 0 1 2 3 4 --planning-steps 10 --output runs/td_dyna.json
+python experiments/compare_td_dyna.py --env-steps 2000 --seeds 0 1 2 3 4 --planning-steps 0 --output runs/dyna_no_planning.json
 ```
 
-The script reports **per-seed final-20-episode mean reward**, aggregate sample mean and **standard error**. It is a method teaching experiment, not a paper benchmark. Different episodes may require different real interactions and Dyna adds model planning backups; therefore equal episode count alone does **not** prove superior sample efficiency.
+The script reports **per-seed final-20-episode mean reward**, aggregate sample mean and **standard error**. It is a method teaching experiment, not a paper benchmark. `--env-steps` matches REAL environment transitions exactly across algorithms and logs `planning_backups`; Dyna performs additional planning, so equal environment data does **not** imply equal total compute. Only completed episodes count toward returns; a tiny budget can legitimately yield null statistics. Omit `--env-steps` for legacy episode-count comparison.
 
 ## Research-grade minimum before drawing conclusions
 1. Align actual **environment interaction steps**, not episode count alone; measure planning FLOPs or wall time separately.
