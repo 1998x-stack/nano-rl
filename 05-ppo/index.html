@@ -1,72 +1,50 @@
-<!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>05 · PPO · Proximal Policy Optimization | nano-rl</title>
-<style>
-:root{color-scheme:dark;--bg:#0b1020;--panel:#141d30;--border:#334154;--text:#eaf1fc;--muted:#afc0d8;--accent:#62d6ba}
-*{box-sizing:border-box}body{margin:0;font:16px/1.65 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(ellipse at 80% 0,#173448 0,transparent 42%),var(--bg);color:var(--text)}
-a{color:#92eacb}header,main,footer{max-width:1100px;margin:auto;padding:24px}header{display:flex;justify-content:space-between;align-items:center;gap:16px}header a{font-size:14px;text-decoration:none}
-h1{font-size:clamp(28px,5vw,48px);line-height:1.18;margin:12px 0 16px;letter-spacing:-.04em}h2{font-size:21px;margin:0 0 12px}p{color:var(--muted);margin:0 0 16px}
-.eyebrow{font:600 12px/1.4 ui-monospace,monospace;letter-spacing:.14em;color:var(--accent)}.hero{padding:44px 0}
-.layout{display:grid;grid-template-columns:1.2fr 1fr;gap:20px}.card{background:linear-gradient(135deg,#192338,#111a2a);padding:24px;border:1px solid var(--border);border-radius:16px}
-.formula{font:600 16px/1.8 ui-monospace,SFMono-Regular,monospace;background:#0b1526;border:1px solid var(--border);padding:18px;word-break:break-word;border-radius:10px;color:#f2dfab;margin:18px 0}
-label{display:flex;justify-content:space-between;gap:8px;margin-top:16px;font-weight:600}input[type=range]{width:100%;accent-color:var(--accent);margin:15px 0 8px}
-svg{display:block;width:100%;height:auto;background:#0a1526;border-radius:12px}.steps{list-style:none;counter-reset:step;padding:0}.steps li{counter-increment:step;display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);align-items:flex-start}.steps li:before{content:counter(step,decimal-leading-zero);font:700 13px monospace;color:var(--accent)}
-small{color:var(--muted)}button{border:1px solid var(--accent);border-radius:8px;background:transparent;color:var(--accent);cursor:pointer;padding:9px 14px}
-pre{overflow:auto;background:#081426;padding:18px;border-radius:12px;color:#ccece7;font-size:13px}footer{color:var(--muted);font-size:12px;padding-top:40px;padding-bottom:50px}
-@media(max-width:760px){.layout{grid-template-columns:1fr}header{padding-bottom:0}.hero{padding:24px 0}main{padding:18px}}
-</style></head>
-<body><header><a href="../index.html">← nano-rl / curriculum</a><a href="README.md">阅读 Markdown 教材 ↗</a></header>
-<main><section class="hero"><div class="eyebrow">05 / 2017 / INTERACTIVE LAB</div>
-<h1>PPO · Proximal Policy Optimization</h1><p>同一批新采样轨迹可以多轮优化，但过大概率比改变不能无限增加目标函数。</p></section>
-<div class="layout"><section class="card"><div class="eyebrow">01 · THE OBJECTIVE</div><h2>核心数学</h2>
-<div class="formula">Lclip = E[min(rθ A, clip(rθ,1−ε,1+ε) A)]</div><p>GAE + Clipped Policy Ratio</p><div class="eyebrow">INTERACTIVE PARAMETER</div>
-<label for="slider"><span>clip ε</span><output id="readout"></output></label>
-<input id="slider" type="range" min=".01" max=".6" step=".01" value=".2" aria-label="clip ε">
-<svg id="chart" viewBox="0 0 540 248" role="img" aria-label="核心超参影响示意图，可使用上方滑块调整">
-<line x1="40" x2="525" y1="206" y2="206" stroke="#64748b"/><line x1="40" x2="40" y1="18" y2="206" stroke="#64748b"/>
-<g id="grid"></g><polyline id="plot" fill="none" stroke="#62d6ba" stroke-width="3" stroke-linejoin="round"/><text id="caption" x="43" y="235" fill="#bcd0df" font-size="13"></text></svg>
-<small>模型解释示意：动态曲线用于理解参数影响，不是完整训练结果或论文实验数据。</small>
-</section><section class="card"><div class="eyebrow">02 · TRAIN LOOP</div><h2>一次更新发生了什么？</h2>
-<ol class="steps" id="steps"></ol><div class="eyebrow" style="margin-top:26px">03 · CODE ANCHOR</div>
-<pre id="anchor"></pre><p><a href="train.py">打开本章全部核心 Python 代码 ↗</a></p>
-</section></div>
-<div class="layout" style="margin-top:20px"><section class="card"><div class="eyebrow">EXPERIMENT</div><h2>动手验证假设</h2>
-<p id="ablation"></p><a href="../datasets/README.md">对应的环境和数据集来源 ↗</a></section>
-<section class="card"><div class="eyebrow">PAPER / CORRECTNESS</div><h2>阅读原论文</h2><p id="pitfall"></p><a id="paper" target="_blank" rel="noopener noreferrer">核心论文 ↗</a></section></div>
-</main><footer>nano-rl · tutorial implementation · no external JS dependencies · synthetic learning curves</footer>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>05 PPO Clipping · nano-rl</title><style>
+:root{color-scheme:dark;--bg:#0a1120;--panel:#172339;--line:#35475a;--ink:#e9f2fc;--muted:#b3c2d8;--mint:#66dec0;--gold:#f0c58a}
+*{box-sizing:border-box}body{background:radial-gradient(circle at 90% -5%,#204153,transparent 50%),var(--bg);color:var(--ink);font:16px/1.6 system-ui;margin:0}
+main{max-width:1050px;margin:auto;padding:26px}a{color:var(--mint)}.top{font-size:13px;color:var(--muted)}.tag{font:600 12px monospace;letter-spacing:.16em;color:var(--mint)}h1{font-size:clamp(32px,5vw,53px);line-height:1.14;letter-spacing:-.04em}h2{font-size:22px}
+p{color:var(--muted)}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{border:1px solid var(--line);background:linear-gradient(130deg,#1b2940,#121c30);border-radius:16px;padding:24px;margin-bottom:18px}
+.mono,pre{font:14px/1.8 ui-monospace,monospace}pre{color:#d1f4ed;background:#091425;padding:18px;border-radius:9px;overflow:auto}
+input[type=range]{width:100%;accent-color:var(--mint)}button{border:1px solid #668999;color:var(--ink);background:#132238;padding:8px 13px;border-radius:8px;cursor:pointer}
+button.active{background:#26705f;border-color:var(--mint)}label{display:block;font-weight:650;margin:18px 0 6px}small{color:var(--muted)}svg{width:100%;height:auto}.chips{display:flex;gap:10px;flex-wrap:wrap}
+@media(max-width:700px){.two{grid-template-columns:1fr}main{padding:18px}}
+</style></head><body><main><nav class="top"><a href="../index.html">← 所有章节</a>　 /　<a href="README.md">查看详细 README</a>　 /　<a href="train.py">阅读 Python 代码</a></nav>
+<div class="tag">05 / POLICY OPTIMIZATION / TRUE CLIPPED OBJECTIVE</div>
+<h1>PPO: 为什么限制<br>策略概率比？</h1><p>这幅图使用 PPO 论文中的原始 clipped surrogate 公式实时计算，而不是模拟训练结果。拖动 ε，切换优势符号，观察何时出现平坦区域。</p>
+<div class="card"><h2>Clipped Objective</h2>
+<pre>r(θ) = π_new(a|s) / π_old(a|s)
+Lclip = min(r A, clip(r, 1−ε, 1+ε) A)
+loss_actor = −mean(Lclip)</pre>
+<div class="two"><div><label for="eps">Clip ε = <output id="epsVal">0.20</output></label><input id="eps" type="range" min=".01" max=".6" value=".2" step=".01">
+<label>固定优势 A 的符号</label><div class="chips"><button id="pos" class="active">A = +1 (好动作)</button><button id="neg">A = −1 (坏动作)</button></div>
+<label for="ratio">新旧策略比 r = <output id="ratioVal">1.60</output></label><input id="ratio" type="range" min=".2" max="2" value="1.6" step=".01">
+<p id="explain"></p></div>
+<div><svg viewBox="0 0 530 285" role="img" aria-label="真实 PPO clip 目标随策略比变化的曲线">
+<line x1="45" y1="20" x2="45" y2="250" stroke="#8295a8"/><line x1="45" y1="135" x2="515" y2="135" stroke="#8295a8"/>
+<path id="raw" fill="none" stroke="#8f9cae" stroke-width="2" stroke-dasharray="5 4"/>
+<path id="clipped" fill="none" stroke="#66dec0" stroke-width="4"/>
+<line id="marker" x1="45" x2="45" y1="18" y2="252" stroke="#f0c58a" stroke-width="2"/>
+<text x="50" y="268" fill="#b3c2d8" font-size="12">r=0.2</text><text x="476" y="268" fill="#b3c2d8" font-size="12">r=2.0</text>
+<text x="220" y="282" fill="#b3c2d8" font-size="12">ratio = π_new / π_old</text></svg>
+<div class="chips"><small>灰色虚线：rA</small><small style="color:#66dec0">绿色实线：min(rA, clipped(r)A)</small><small style="color:#f0c58a">黄色：当前 ratio</small></div></div></div></div>
+<div class="two"><section class="card"><h2>训练代码的对应位置</h2><p><a href="../utils/math.py">utils.math.ppo_surrogate</a> 精确实现 `minimum(ratio*A, clip(ratio)*A)`。</p><pre>ratio = (new_logp - old_logp).exp()
+surr1 = ratio * advantage
+surr2 = ratio.clamp(1-eps, 1+eps) * advantage
+loss = -torch.minimum(surr1, surr2).mean()</pre></section>
+<section class="card"><h2>不要混淆</h2><p><b>Clip 不是对 KL 散度的严格硬约束。</b> 它对“有利于进一步改变该动作概率”的方向产生截断，却不直接阻止所有策略参数更新。</p><p>真实训练里，`old_logp` 来自本轮更新之前的行为策略，同一批数据只做有限次优化，之后必须重新采样，因此通常称为 On-policy。</p><a href="README.md">详细阅读 GAE 与时间截断处理 →</a></section></div>
 <script>
-const d={"id":"05-ppo","n":"05","title":"PPO · Proximal Policy Optimization","period":"2017","method":"GAE + Clipped Policy Ratio","formula":"Lclip = E[min(rθ A, clip(rθ,1−ε,1+ε) A)]","insight":"同一批新采样轨迹可以多轮优化，但过大概率比改变不能无限增加目标函数。","algorithm":["使用当前策略收集 horizon 个 (s,a,logπ_old,r,V)","用 GAE 计算 advantage 与 bootstrap return","把 old log-probs 当作固定数据","4 个 epoch 小批量最大化 clipped surrogate，加 value loss / entropy"],"param":"clip ε","unit":"clip","min":0.01,"max":0.6,"step":0.01,"val":0.2,"pitfall":"旧 log-probs 不得用更新后的模型重新计算；要区分 terminated 与 truncated，不能跨 episode 重置传播 GAE。","ablation":"扫 ε=0.05/0.2/0.4，观察 ratio、return、approx KL。","code":"ActorCritic / generalized_advantage / ppo_surrogate","paper":"Proximal Policy Optimization Algorithms (Schulman et al., 2017)","url":"https://arxiv.org/abs/1707.06347","env":"Gymnasium CartPole-v1"};
-const slider=document.getElementById("slider"), readout=document.getElementById("readout");
-document.getElementById("steps").innerHTML=d.algorithm.map(x=>"<li>"+x+"</li>").join("");
-document.getElementById("anchor").textContent="train.py → "+d.code+"\n\n# Open the file and follow the shape of each update.";
-document.getElementById("ablation").textContent=d.ablation;
-document.getElementById("pitfall").textContent=d.pitfall;
-const paper=document.getElementById("paper");paper.href=d.url;paper.textContent=d.paper+" ↗";
-function score(x,p){
- const g=(z)=>Math.exp(-z*z);
- switch(d.n){
- case "01": return (1-Math.pow(p,x*7))/(1-p+0.08);
- case "02": return 0.1 + 1-Math.pow(1-p,12*x);
- case "03": return Math.pow(p,Math.floor(5*x))*(.25+.7*x);
- case "04": return 1-Math.exp(-x*180/(p+1));
- case "05": {let r=.45+x*1.35,a=1;return Math.min(r*a,Math.max(1-p,Math.min(1+p,r))*a);}
- case "06": return 1-Math.pow(x-.7,2)*1.9+p*(-Math.log(.08+Math.abs(x-.5)))*.24;
- case "07": return 1-Math.exp(-x*(p+1)/4);
- case "08": return (1-p)*(.35+.45*x)+p*(.20+.72*x);
- case "09": return 1-Math.pow(1-.10,p*(.2+.8*x));
- case "10": return (1-p)*(.25+.72*x)+p*.5;
- default:return x;
- }
+const e=document.getElementById("eps"),r=document.getElementById("ratio");let A=1;
+function plot(){
+ const eps=+e.value,ratio=+r.value;
+ function y(x,clip){return clip?Math.min(x*A,Math.max(1-eps,Math.min(1+eps,x))*A):x*A}
+ const transform=(z)=>135-90*z;
+ function line(clip){let d="";for(let i=0;i<=180;i++){let x=.2+i*.01,xx=45+i/180*470,yy=transform(y(x,clip));d+=(i?"L":"M")+xx.toFixed(2)+" "+yy.toFixed(2)+" ";}return d}
+ document.getElementById("raw").setAttribute("d",line(false));document.getElementById("clipped").setAttribute("d",line(true));
+ const mark=45+(ratio-.2)/1.8*470;document.getElementById("marker").setAttribute("x1",mark);document.getElementById("marker").setAttribute("x2",mark);
+ document.getElementById("epsVal").textContent=eps.toFixed(2);document.getElementById("ratioVal").textContent=ratio.toFixed(2);
+ document.getElementById("explain").textContent="未裁剪 rA="+y(ratio,false).toFixed(3)+"；实际代理目标="+y(ratio,true).toFixed(3)+"。"+
+ (A>0?" 好动作概率增加超过 1+ε 后，收益不再随 r 增大。":" 坏动作概率降低超过 1−ε 后，目标不再随 r 改善。");
 }
-function redraw(){
- const p=Number(slider.value);readout.textContent=String(p);
- const ys=Array.from({length:100},(_,i)=>score(i/99,p));
- const lo=Math.min(...ys),hi=Math.max(...ys),spread=Math.max(.01,hi-lo);
- const points=ys.map((v,i)=>(40+485*i/99).toFixed(1)+","+(203-175*(v-lo)/spread).toFixed(1)).join(" ");
- document.getElementById("plot").setAttribute("points",points);
- document.getElementById("caption").textContent="x: normalized progress / ratio     y: relative objective ("+d.unit+"="+p+")";
- const grid=document.getElementById("grid");
- grid.innerHTML=[.25,.5,.75].map(y=>'<line x1="40" x2="525" y1="'+(203-y*175)+'" y2="'+(203-y*175)+'" stroke="#344355" stroke-dasharray="3 7"/>').join("");
-}
-slider.addEventListener("input",redraw);redraw();
-</script></body></html>
+document.getElementById("pos").onclick=()=>{A=1;document.getElementById("pos").className="active";document.getElementById("neg").className="";plot()};
+document.getElementById("neg").onclick=()=>{A=-1;document.getElementById("neg").className="active";document.getElementById("pos").className="";plot()};
+[e,r].forEach(x=>x.addEventListener("input",plot));plot();
+</script></main></body></html>
