@@ -128,13 +128,28 @@ def self_play(net, simulations=24):
     return examples, winner
 
 
+def masked_policy_log_probs(logits, states):
+    """非法落子在策略损失的 softmax 分母中也必须被排除。
+
+    states 的符号取决于当前执手；等于 0 才代表未落子的合法格。
+    仅在搜索时 mask、训练时不 mask，会把概率质量浪费在无效动作上。
+    """
+    legal = states == 0
+    if not bool(legal.any(dim=-1).all()):
+        raise ValueError("policy target requires at least one legal move")
+    return F.log_softmax(logits.masked_fill(~legal, -1e9), dim=-1)
+
+
 def policy_value_loss(net, examples):
     states = torch.stack([e[0] for e in examples])
-    target_pi = torch.tensor(np.stack([e[1] for e in examples]))
-    target_value = torch.tensor([e[2] for e in examples])
+    target_pi = torch.tensor(np.stack([e[1] for e in examples]), dtype=torch.float32)
+    target_value = torch.tensor([e[2] for e in examples], dtype=torch.float32)
+    if bool(((target_pi > 0) & (states != 0)).any()):
+        raise ValueError("MCTS target assigns probability to an illegal move")
     logits, value = net(states)
-    return -(target_pi * F.log_softmax(logits, dim=-1)).sum(-1).mean() + F.mse_loss(
-        value, target_value)
+    # 合法动作上的交叉熵；非法 logits 不应被动作策略梯度推动。
+    logp = masked_policy_log_probs(logits, states)
+    return -(target_pi * logp).sum(-1).mean() + F.mse_loss(value, target_value)
 
 
 def train(games=40, simulations=16, seed=42, log_enabled=True):

@@ -54,43 +54,64 @@ def oracle_value(position, gamma=.95):
 
 def make_batch(batch_size=16, unroll=3, seed=42):
     rng, env = np.random.default_rng(seed), CorridorEnv()
-    states, actions, rewards, dones = [], [], [], []
+    states, actions, rewards, dones, valid = [], [], [], [], []
     for _ in range(batch_size):
         s = int(rng.integers(0, env.n-1))
-        st, ac, rew, dn = [s], [], [], []
+        st, ac, rew, dn, mask = [s], [], [], [], []
+        ended = False
         for _ in range(unroll):
-            a = int(rng.integers(2)) if rng.random() < .45 else 1
-            ns, r, done = env.transition(s, a)
+            if ended:
+                # padding 不是环境交互，不应贡献 dynamics/reward/policy loss。
+                a, ns, r, done, active = 0, s, 0., True, 0.
+            else:
+                a = int(rng.integers(2)) if rng.random() < .45 else 1
+                ns, r, done = env.transition(s, a)
+                active = 1.
             ac.append(a); rew.append(r); dn.append(float(done))
+            mask.append(active)
             st.append(ns)
-            s = ns
-        states.append(st); actions.append(ac); rewards.append(rew); dones.append(dn)
+            s, ended = ns, ended or done
+        states.append(st); actions.append(ac); rewards.append(rew)
+        dones.append(dn); valid.append(mask)
     return (torch.tensor(states, dtype=torch.int64),
             torch.tensor(actions, dtype=torch.int64),
             torch.tensor(rewards, dtype=torch.float32),
-            torch.tensor(dones, dtype=torch.float32))
+            torch.tensor(dones, dtype=torch.float32),
+            torch.tensor(valid, dtype=torch.float32))
+
+
+def masked_mean(per_example, mask):
+    """固定张量形状不意味着 padding 是真实经历；仅对有效样本求平均。"""
+    return (per_example * mask).sum() / mask.sum().clamp_min(1.)
 
 
 def unroll_loss(net, batch):
-    states, actions, rewards, dones = batch
+    states, actions, rewards, dones, valid = batch
     h = net.initial(F.one_hot(states[:, 0], 5).float())
     losses = []
     K = actions.shape[1]
     for t in range(K + 1):
         logits, values = net.predict(h)
-        # A transparent teacher simplifies training; *not* AlphaZero-style self-play.
+        # policy 只能监督真实的非终止行动；value 还可学习最后的 terminal V=0。
+        policy_mask = valid[:, t] if t < K else (
+            valid[:, t-1] * (1 - dones[:, t-1]))
+        state_mask = torch.ones_like(valid[:, 0]) if t == 0 else valid[:, t-1]
         target_policy = torch.ones(states.shape[0], dtype=torch.long)
         target_values = torch.tensor([oracle_value(s) for s in states[:, t].tolist()],
-                                     dtype=torch.float32)
-        losses.append(.2 * F.cross_entropy(logits, target_policy) +
-                      .5 * F.mse_loss(values, target_values))
+                                     dtype=torch.float32, device=values.device)
+        policy_ce = F.cross_entropy(logits, target_policy, reduction="none")
+        value_error = (values - target_values).square()
+        losses.append(.2 * masked_mean(policy_ce, policy_mask) +
+                      .5 * masked_mean(value_error, state_mask))
         if t < K:
             nxt, reward_pred, done_logits = net.recurrent(h, actions[:, t])
             obs_next = F.one_hot(states[:, t+1], 5).float()
             expected_hidden = net.initial(obs_next).detach()
-            losses.append(F.mse_loss(reward_pred, rewards[:, t]) +
-                          .2 * F.binary_cross_entropy_with_logits(done_logits, dones[:, t]) +
-                          .1 * F.mse_loss(nxt, expected_hidden))
+            per_transition = (reward_pred - rewards[:, t]).square() + (
+                .2 * F.binary_cross_entropy_with_logits(
+                    done_logits, dones[:, t], reduction="none")) + (
+                .1 * (nxt - expected_hidden).square().mean(-1))
+            losses.append(masked_mean(per_transition, valid[:, t]))
             h = nxt
     return torch.stack(losses).sum() / (K + 1)
 
