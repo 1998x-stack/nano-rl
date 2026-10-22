@@ -70,6 +70,16 @@ python 15-rlhf-from-scratch/train.py --steps 200
 5. **论文可获取**：每章 `papers/README.md` 给出官方论文链接，并用 [scripts/download_papers.py](scripts/download_papers.py) 下载至本地。第三方 PDF 默认不提交 git。
 6. **优先正确性**：单元测试检查 Bellman 备份、终止状态、优势、概率比、奖励组归一化；CI 做 CPU smoke tests，不保证短训练收敛。
 
+## 可复现的多随机种子实验
+
+[实验规范与陷阱](experiments/README.md) · [Q-Learning vs Dyna-Q 5 seeds 复现实验](experiments/compare_td_dyna.py)
+
+```bash
+python experiments/compare_td_dyna.py --episodes 100 --seeds 0 1 2 3 4 --planning-steps 10 --output runs/td_dyna.json
+```
+
+输出各 seed 后 20 个 episode 的平均奖励及跨 seed 标准误。**对比预算是 episode 数，不是严格对齐的真实环境交互数；因此此实验不应被用于宣称模型样本效率优势。**
+
 ## 检查与工程
 
 ```bash
