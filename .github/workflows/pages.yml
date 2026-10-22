@@ -12,6 +12,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   deploy:
+    # Avoid failing on a fresh repository before its owner enables GitHub Pages.
+    if: github.event.repository.has_pages == true
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

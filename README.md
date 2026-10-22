@@ -11,7 +11,7 @@
 
 | 章节 | 核心问题 / 方法 | 默认环境 / 数据 | 入口 |
 |---|---|---|---|
-| [01 · MDP / DP](01-mdp-planning/) | Bellman 备份、值迭代与策略迭代 | 自包含 GridWorld | `python -m chapters.mdp` 或 `python 01-mdp-planning/train.py` |
+| [01 · MDP / DP](01-mdp-planning/) | Bellman 备份、值迭代与策略迭代 | 自包含 GridWorld | `python 01-mdp-planning/train.py` |
 | [02 · TD Control](02-td-control/) | Q-Learning vs SARSA、Bootstrapping | 自包含 GridWorld；可扩展 FrozenLake | `python 02-td-control/train.py` |
 | [03 · REINFORCE](03-reinforce/) | 回报加权的策略梯度 | CartPole-v1 | `python 03-reinforce/train.py` |
 | [04 · DQN](04-dqn/) | Experience Replay + Target Network | CartPole-v1 | `python 04-dqn/train.py` |
