@@ -5,7 +5,7 @@
 > **目标：小到能读懂，深到能改动，并且每个公式都能定位到代码。**
 
 [![CI](https://github.com/1998x-stack/nano-rl/actions/workflows/tests.yml/badge.svg)](https://github.com/1998x-stack/nano-rl/actions/workflows/tests.yml)
-[**在线交互教材（GitHub Pages）**](https://1998x-stack.github.io/nano-rl/)
+[**交互式 HTML 教材**](index.html) · [GitHub Pages（需要仓库所有者首次启用）](https://1998x-stack.github.io/nano-rl/)
 
 ## 学习地图
 

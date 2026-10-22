@@ -15,7 +15,7 @@ PAPERS = {
     "05-ppo": ["https://arxiv.org/pdf/1707.06347"],
     "06-sac": ["https://arxiv.org/pdf/1801.01290"],
     "07-dyna-q": ["https://link.springer.com/content/pdf/10.1007/BF00115009.pdf"],
-    "08-offline-fqi": ["https://arxiv.org/pdf/2005.01643"],
+    "08-offline-fqi": ["https://arxiv.org/pdf/2006.04779"],
     "09-grpo-reasoning": ["https://arxiv.org/pdf/2402.03300"],
     "10-multi-agent": ["https://arxiv.org/pdf/1706.02275"],
 }
