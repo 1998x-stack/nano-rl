@@ -20,3 +20,13 @@ Keep the implementation small enough to understand from top to bottom. **Never s
 - Do not git-commit downloads, benchmark datasets or credentials. Use provenance, license and URL in datasets catalog.
 - No insecure `eval()` on untrusted data; constrain PDF download hosts to arxiv.org in helper.
 - Prefer clarity to generic abstractions; avoid premature configuration factories.
+
+## V2 rigorous design contract
+- AlphaZero: test legal action masking and alternating-player value negation.
+- MuZero: search may call **only learned** h/g/f; use monkeypatch test to reject calls to `CorridorEnv.transition`.
+- Dreamer: train posterior/prior from real observations; in imagination no next observation is allowed and model gradients should be stopped for agent updates.
+- Decision Transformer: action head reads *state token* position `1+3*t`, masked from same-step action; add anti-leak regression tests.
+- RLHF: never expose synthetic ground-truth correct answers to PPO; train Bradley–Terry RM first, then freeze RM and SFT reference.
+- Distinguish a mini demonstration from full original paper: document exact simplifications next to claims.
+- Run `pytest` and 15 CPU smoke scripts in CI before declaring success; verify computed HTML scripts with Node syntax checker.
+- Update both main `index.html` chapters and root `README.md` when creating a new chapter.

@@ -1,6 +1,6 @@
 # nano-rl — Reinforcement Learning, one algorithm at a time
 
-> 用 nanoGPT 式的简洁代码，从 Bellman 方程一路学习到 GRPO。每章均有可运行实验、逐行关键注释、独立 HTML 可视化，以及原始论文链接。
+> 用 nanoGPT 式的简洁代码，从 Bellman 方程、PPO、GRPO 学到 AlphaZero、MuZero、Dreamer、Decision Transformer 与 RLHF。每章均有可运行实验、逐行关键注释、独立 HTML 可视化，以及原始论文链接。
 >
 > **目标：小到能读懂，深到能改动，并且每个公式都能定位到代码。**
 
@@ -21,8 +21,13 @@
 | [08 · Offline RL](08-offline-fqi/) | 固定经验上的 Fitted Q Iteration | 自动生成 GridWorld 行为数据 | `python 08-offline-fqi/train.py` |
 | [09 · GRPO](09-grpo-reasoning/) | 组内相对优势 + Clip 更新 | 程序合成的迷你算术任务 | `python 09-grpo-reasoning/train.py` |
 | [10 · Multi-Agent](10-multi-agent/) | 多智能体协调和独立 Q-Learning | 自包含协同矩阵游戏 | `python 10-multi-agent/train.py` |
+| [11 · AlphaZero](11-alphazero-selfplay/) | PUCT + 神经网络 + 自博弈 | TicTacToe | `python 11-alphazero-selfplay/train.py` |
+| [12 · MuZero](12-muzero-latent/) | Learned representation/dynamics/prediction + latent MCTS | CorridorEnv | `python 12-muzero-latent/train.py` |
+| [13 · Dreamer](13-dreamer-imagination/) | RSSM posterior/prior + imagined actor-critic | CorridorEnv | `python 13-dreamer-imagination/train.py` |
+| [14 · Decision Transformer](14-decision-transformer/) | Return-to-go + causal action modeling | 固定 Corridor trajectories | `python 14-decision-transformer/train.py` |
+| [15 · RLHF](15-rlhf-from-scratch/) | SFT → Preference RM → PPO + KL | Synthetic arithmetic preferences | `python 15-rlhf-from-scratch/train.py` |
 
-**章节数字表示推荐学习顺序，并非严格论文发表时间。** 07–10 章代表不同研究分支，不是彼此的前置依赖。
+**章节数字代表建议的学习顺序，不是严格历史时间轴。** 11–15 章探索搜索、学习环境模型、想象学习、序列模型和偏好对齐五条不完全可相互替代的路线。
 
 ## 快速开始
 
@@ -38,7 +43,23 @@ pytest -q
 tensorboard --logdir runs
 ```
 
-全部示例默认使用 CPU、固定随机种子、短训练预算以利教学；想比较真实算法性能，应增加采样预算并跨随机种子评估。完整运行依赖详见 `requirements.txt`；无网络亦可执行 01/02/07/08/09/10 的核心小环境实验。
+全部示例默认使用 CPU、固定随机种子、短训练预算以利教学；想比较真实算法性能，应增加采样预算并跨随机种子评估。完整运行依赖详见 `requirements.txt`；无网络亦可执行 01/02/07/08/09/10/11/12/13/14/15 的核心小环境实验。
+
+## V2 深化教材（论文级知识链条）
+
+[**设计决策、信息泄漏边界和验收标准**](DESIGN.md) · [**按研究级别分阶段升级的 ROADMAP**](ROADMAP.md)
+
+每章独立运行并保留核心数学实现。11 章用真实游戏规则做零和 PUCT；12 章仅在数据采集阶段接触环境转移，在搜索时只能访问学习的潜在动力学；13 章训练随机 RSSM 后于 prior 中想象轨迹；14 章严格保证 state token 无法看到同一步动作答案；15 章冻结奖励模型和参考策略，将程序化偏好替代人工标注。**它们是忠实呈现关键机制的教学缩微实现，而不是官方论文完整复刻**。
+
+可单独运行：
+
+```bash
+python 11-alphazero-selfplay/train.py --games 20 --simulations 16
+python 12-muzero-latent/train.py --steps 200
+python 13-dreamer-imagination/train.py --steps 200
+python 14-decision-transformer/train.py --steps 200
+python 15-rlhf-from-scratch/train.py --steps 200
+```
 
 ## 设计约定（源自 nanoGPT 的学习体验）
 

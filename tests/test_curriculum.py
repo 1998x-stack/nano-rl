@@ -8,7 +8,9 @@ import pytest
 ROOT=Path(__file__).resolve().parents[1]
 CHAPTERS=[
     "01-mdp-planning","02-td-control","03-reinforce","04-dqn","05-ppo",
-    "06-sac","07-dyna-q","08-offline-fqi","09-grpo-reasoning","10-multi-agent"
+    "06-sac","07-dyna-q","08-offline-fqi","09-grpo-reasoning","10-multi-agent",
+    "11-alphazero-selfplay","12-muzero-latent","13-dreamer-imagination",
+    "14-decision-transformer","15-rlhf-from-scratch"
 ]
 
 
@@ -19,7 +21,7 @@ def test_chapter_assets():
         for relative in ("README.md","train.py","index.html","papers/README.md"):
             assert (folder/relative).is_file(), (name,relative)
         html=(folder/"index.html").read_text(encoding="utf-8")
-        assert "<input" in html and ("<svg" in html or 'id="board"' in html)
+        assert "<input" in html and any(x in html for x in ("<svg", 'id="board"', 'id="trace"', 'id="matrix"'))
         assert "<script>" in html and "train.py" in html
         assert "train.py" in (folder/"README.md").read_text(encoding="utf-8")
 

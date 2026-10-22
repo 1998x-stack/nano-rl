@@ -18,6 +18,11 @@ PAPERS = {
     "08-offline-fqi": ["https://arxiv.org/pdf/2006.04779"],
     "09-grpo-reasoning": ["https://arxiv.org/pdf/2402.03300"],
     "10-multi-agent": ["https://arxiv.org/pdf/1706.02275"],
+    "11-alphazero-selfplay": ["https://arxiv.org/pdf/1712.01815"],
+    "12-muzero-latent": ["https://arxiv.org/pdf/1911.08265"],
+    "13-dreamer-imagination": ["https://arxiv.org/pdf/2301.04104"],
+    "14-decision-transformer": ["https://arxiv.org/pdf/2106.01345"],
+    "15-rlhf-from-scratch": ["https://arxiv.org/pdf/2203.02155"],
 }
 # Keep potentially inaccessible publisher PDFs as citations only; download only arxiv hosts.
 def main():
