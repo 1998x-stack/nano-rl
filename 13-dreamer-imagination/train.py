@@ -58,54 +58,76 @@ class WorldModel(nn.Module):
 
 
 def collect_sequences(batch_size=24, horizon=5, seed=42):
-    """Fixed synthetic real-environment trajectories, including absorbing terminal."""
+    """Collect transitions until terminal; pad with mask 0, NOT fabricated experience."""
     rng, env = np.random.default_rng(seed), CorridorEnv()
-    states, actions, rewards, terminals = [], [], [], []
+    states, actions, rewards, terminals, masks = [], [], [], [], []
     for _ in range(batch_size):
         pos = int(rng.integers(0, env.n - 1))
-        st, ac, rew, done = [pos], [], [], []
+        st, ac, rew, done, valid = [pos], [], [], [], []
+        ended = False
         for _ in range(horizon):
-            action = int(rng.integers(2)) if rng.random() < .5 else 1
-            pos, reward, terminal = env.transition(pos, action)
+            if ended:
+                action, reward, terminal, active = 0, 0., True, 0.
+            else:
+                action = int(rng.integers(2)) if rng.random() < .5 else 1
+                pos, reward, terminal = env.transition(pos, action)
+                active = 1.
             st.append(pos); ac.append(action)
-            rew.append(reward); done.append(float(terminal))
+            rew.append(reward); done.append(float(terminal)); valid.append(active)
+            ended = ended or terminal
         states.append(st); actions.append(ac)
-        rewards.append(rew); terminals.append(done)
+        rewards.append(rew); terminals.append(done); masks.append(valid)
     return tuple(torch.tensor(x, dtype=dtype) for x,dtype in zip(
-        (states, actions, rewards, terminals),
-        (torch.long, torch.long, torch.float32, torch.float32)))
+        (states, actions, rewards, terminals, masks),
+        (torch.long, torch.long, torch.float32, torch.float32, torch.float32)))
+
+
+def masked_mean(values, valid):
+    """Prevent gradients from post-terminal padded rows."""
+    return (values * valid).sum() / valid.sum().clamp_min(1.)
 
 
 def reconstruction_loss(model, data):
-    states, actions, rewards, terminals = data
+    states, actions, rewards, terminals, valid = data
     obs = F.one_hot(states[:, 0], model.observations).float()
     h, z = model.initial(obs)
     losses = []
     for t in range(actions.shape[1]):
-        h, prior = model.transition(h, z, actions[:, t])
-        # Reward and termination predicted from PRIOR latent, which can be
-        # generated without seeing the true next observation.
+        h_new, prior = model.transition(h, z, actions[:, t])
+        # Reward and termination predicted from PRIOR, not leaked next observation.
         prior_z = prior.rsample()
-        _, r_hat, done_logits = model.predict(h, prior_z)
+        _, r_hat, done_logits = model.predict(h_new, prior_z)
         next_obs = F.one_hot(states[:, t + 1], model.observations).float()
-        post = model.posterior(h, next_obs)
-        z = post.rsample()
-        logits, _, _ = model.predict(h, z)
-        kl = kl_divergence(post, prior).sum(-1).mean()
-        losses.append(F.cross_entropy(logits, states[:, t + 1]) +
-                      F.mse_loss(r_hat, rewards[:, t]) +
-                      .3 * F.binary_cross_entropy_with_logits(done_logits, terminals[:, t]) +
-                      .1 * torch.clamp(kl, min=.1))
+        post = model.posterior(h_new, next_obs)
+        z_new = post.rsample()
+        logits, _, _ = model.predict(h_new, z_new)
+        kl = kl_divergence(post, prior).sum(-1).clamp(min=.1)
+        per_row = (F.cross_entropy(logits, states[:, t+1], reduction="none") +
+                   (r_hat - rewards[:, t]).square() +
+                   .3 * F.binary_cross_entropy_with_logits(
+                       done_logits, terminals[:, t], reduction="none") +
+                   .1 * kl)
+        losses.append(masked_mean(per_row, valid[:, t]))
+        # Preserve the last real state for terminated sequences; do not roll
+        # the RSSM forward over absorbing padding rows.
+        active = valid[:, t].bool().unsqueeze(-1)
+        h = torch.where(active, h_new, h)
+        z = torch.where(active, z_new, z)
     return torch.stack(losses).mean()
 
 
 @torch.no_grad()
 def infer_last_state(model, data):
-    states, actions, _, _ = data
-    h, z = model.initial(F.one_hot(states[:, 0], 5).float())
+    """Return last REAL posterior state, ignoring any post-terminal padding."""
+    states, actions, _, _, valid = data
+    h, z = model.initial(F.one_hot(states[:, 0], model.observations).float())
     for t in range(actions.shape[1]):
-        h, _ = model.transition(h, z, actions[:, t])
-        z = model.posterior(h, F.one_hot(states[:, t+1], 5).float()).sample()
+        proposed_h, _ = model.transition(h, z, actions[:, t])
+        proposed_z = model.posterior(
+            proposed_h, F.one_hot(states[:, t+1], model.observations).float()).sample()
+        active = valid[:, t].bool().unsqueeze(-1)
+        h = torch.where(active, proposed_h, h)
+        z = torch.where(active, proposed_z, z)
     return h, z
 
 
@@ -172,7 +194,11 @@ def train(steps=250, seed=42, log_enabled=True):
         model_loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), 10.)
         model_opt.step()
-        starting_state = infer_last_state(model, batch)
+        # Start imagined rollouts from observed NON-TERMINAL starts instead of
+        # the final posterior, which may already represent a terminal state.
+        with torch.no_grad():
+            start_obs = F.one_hot(batch[0][:, 0], model.observations).float()
+            starting_state = model.initial(start_obs)
         actor_loss, critic_loss, avg_target = imagination_loss(model, agent, starting_state)
         agent_opt.zero_grad()
         (actor_loss + critic_loss).backward()
