@@ -5,6 +5,7 @@
 - [x] 11–15: AlphaZero, learned-dynamics MuZero, latent imagination Dreamer, Decision Transformer, preference-model RLHF.
 - [x] End-to-end sample commands, chapters' papers provenance, interactive pages, correctness tests.
 - [x] New reproducible `CorridorEnv` for latent dynamics and sequence modelling.
+- [x] Advanced optional causal two-token GPT RLHF path alongside the minimal one-token baseline.
 
 ## V3 · stronger experimental science (not yet implemented)
 - [ ] Common **evaluation harness**: 5 independent random seeds, bootstrap CI, learning curves with aligned env steps.
@@ -13,7 +14,7 @@
 - [ ] MuZero reanalysis, value/reward support discretization, prioritized sequence replay.
 - [ ] DreamerV3 symlog, categorical stochastic representations, lambda returns with continuation-model calibration.
 - [ ] Offline DT benchmark with dataset quality tiers, attention ablations, return targeting.
-- [ ] Real small-token autoregressive GPT RLHF (SFT → pairwise RM → sequence PPO) with masked KL and advantage traces.
+- [ ] Expand the implemented causal two-token RLHF demonstration to variable-length sequence PPO, completion masks, full GAE and online preference/data versioning.
 - [ ] RLVR verification against code/math tasks with tool sandbox and regression guardrails.
 - [ ] Deterministic exported run manifests (git SHA, seed, env package versions), reproducible report.
 - [ ] Accessible, multilingual visualizations (keyboard, touch, math typesetting).

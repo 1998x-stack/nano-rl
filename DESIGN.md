@@ -9,9 +9,13 @@ The original curriculum covers value learning → policy gradient → deep RL �
 | 12 MuZero-inspired | h representation, g learned latent transition + reward, f value/policy, unroll training, latent PUCT search | supervised dynamics/value teacher, no reanalyse |
 | 13 Dreamer-inspired | posterior/prior recurrent stochastic state-space model, reconstruction + KL, learned reward, imagined actor-critic | basic diagonal Gaussian RSSM; no DreamerV3 symlog/discretization |
 | 14 Decision Transformer | return-conditioned causal token interleaving and masked action prediction, fixed behavior trajectories | small MLP-embed transformer over finite states, not Atari |
-| 15 RLHF | supervised starting policy, pairwise Bradley-Terry reward model, frozen reference, PPO-style preference optimization | one-token categorical responses, synthetic preferences instead of human labels |
+| 15 RLHF | supervised starting policy, pairwise Bradley-Terry reward model, frozen reference, PPO-style preference optimization | one-token categorical responses in basic train.py, synthetic preferences instead of human labels; optional token_rlhf.py uses a causal 2-token GPT |
 
 These are *distinct* approaches and not a chronological linear chain.
+
+## Optional advanced token-RLHF lane
+
+`15-rlhf-from-scratch/token_rlhf.py` retains a real causal decoder, sequence reward scorer, SFT→BT→two-token PPO and per-token reference KL shaping. Tokens 0/1 of the numeric response are sampled autoregressively; EOS is fixed by the toy grammar. This is a bridge to variable-length generative RLHF, not a claim to LLM-scale training or genuine human preference data.
 
 ## Data lineage & no-leak design
 - 11 generates games with true rules only in self-play. MCTS uses legal moves and terminal rules (as AlphaZero does); labels use final game outcome from the acting player's perspective.

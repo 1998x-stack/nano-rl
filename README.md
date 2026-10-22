@@ -49,7 +49,7 @@ tensorboard --logdir runs
 
 [**设计决策、信息泄漏边界和验收标准**](DESIGN.md) · [**按研究级别分阶段升级的 ROADMAP**](ROADMAP.md)
 
-每章独立运行并保留核心数学实现。11 章用真实游戏规则做零和 PUCT；12 章仅在数据采集阶段接触环境转移，在搜索时只能访问学习的潜在动力学；13 章训练随机 RSSM 后于 prior 中想象轨迹；14 章严格保证 state token 无法看到同一步动作答案；15 章冻结奖励模型和参考策略，将程序化偏好替代人工标注。**它们是忠实呈现关键机制的教学缩微实现，而不是官方论文完整复刻**。
+每章独立运行并保留核心数学实现。11 章用真实游戏规则做零和 PUCT；12 章仅在数据采集阶段接触环境转移，在搜索时只能访问学习的潜在动力学；13 章训练随机 RSSM 后于 prior 中想象轨迹；14 章严格保证 state token 无法看到同一步动作答案；15 章冻结奖励模型和参考策略，将程序化偏好替代人工标注；其 [进阶实验](15-rlhf-from-scratch/token_rlhf.py) 进一步实现真正自回归的双 token GPT、序列奖励模型和逐 token PPO。**它们是忠实呈现关键机制的教学缩微实现，而不是官方论文完整复刻**。
 
 可单独运行：
 
@@ -59,6 +59,7 @@ python 12-muzero-latent/train.py --steps 200
 python 13-dreamer-imagination/train.py --steps 200
 python 14-decision-transformer/train.py --steps 200
 python 15-rlhf-from-scratch/train.py --steps 200
+python 15-rlhf-from-scratch/token_rlhf.py --steps 200  # 进阶：causal multi-token GPT
 ```
 
 ## 设计约定（源自 nanoGPT 的学习体验）
